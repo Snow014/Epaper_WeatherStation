@@ -15,6 +15,7 @@ This Repository ( and project for that matter ) is still a WIP, and will get upd
 - Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
 - Temperature, humidity, air pressure, dew point and rainfall readings
 - Daily minimum/maximum readings that reset at 0:00
+- Average rainfall per hour, total rainfall, and latest rainfall readings that reset at 0:00
 - Auto-ranging 12 hour graphs of temperature, humidity and air pressure
 - 12 hour bar graph for rainfall
 - Built-in Zambretti forecast
