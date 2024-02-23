@@ -115,7 +115,8 @@ float rainAvg, rainLast, rainTotal;
 String minMaxTimes[3][2];
 
 String rawData = "";
-String dataTime = "00:00";
+String dataTime = "00:00";  //  timestamp of last probe data
+String rainTime = "00:00";  //  timestamp of last rain data
 
 bool showLightningData = false;
 TaskHandle_t handleOTA;
@@ -201,7 +202,7 @@ void setup() {
   // }
   
   // for(int i = 0; i < rainGraphSize; i++){
-  //   gDataR[i] = random(5);
+  //   gDataR[i] = 10;
   // }
 
   if(wipeOnStartup){
@@ -445,9 +446,13 @@ void parseRainData(String rawData){
   //  extract data from raw string
   rawData.trim();
   
-  rainLast = rawData.substring(1, rawData.indexOf("|")).toFloat();  //  rain value
-  int dataHour = rawData.substring(rawData.indexOf(":")).toInt();   //  hour from time
-  String rainTime = rawData.substring(rawData.indexOf("|"));        //  full time ( String format )
+  rainLast = rawData.substring(1, rawData.indexOf("|")).toFloat();      //  rain value 
+  rainTime = rawData.substring(rawData.indexOf("|")+1);          //  full time ( String format )
+  int dataHour = rainTime.substring(0, rainTime.indexOf(":")).toInt();  //  hour from time
+
+  Serial.println("rainLast: " + String(rainLast));
+  Serial.println("dataHour: " + String(dataHour));
+  Serial.println("rainTime: " + String(rainTime));
 
   //  shift data into array
   for(int i = 0; i < rainGraphSize-1; i++){
@@ -651,6 +656,8 @@ void WWSUIAlt(){
   drawText("Total:" + String(rainTotal), 400, 235, RIGHT);
 
   drawBargraph(0, 230, 400, 70, gDataR);
+
+  drawText(rainTime, 400, 25, RIGHT);
 
   display.display();
   display.powerOff();
