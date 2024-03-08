@@ -12,13 +12,14 @@ This Repository ( and project for that matter ) is still a WIP, and will get upd
 - A 4.2" E-paper screen
 - Small form factor
 - runs on an ESP32
-
+- OTA updates running on second core ( disabled by default )
 - Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
 - Temperature, humidity, air pressure, dew point and rainfall readings
 - Daily minimum/maximum readings that reset at 0:00
 - Auto-ranging 12 hour graphs of temperature, humidity and air pressure
 - 12 hour bar graph for rainfall
 - Built-in Zambretti forecast
+  
 ##  Bill of Materials
 
 I buy most of my parts from [Tinytronics](https://www.tinytronics.nl/en), a local store. They ship to what seems like most of Europe, though they're definitely  not the cheapest.
@@ -39,16 +40,4 @@ I will link the products I bought from their site, but feel free to buy them els
 - [A BME280](https://www.tinytronics.nl/en/sensors/air/pressure/bme280-digital-barometer-pressure-and-humidity-sensor-module)
 - [A SHT40](https://www.tinytronics.nl/en/sensors/air/humidity/dfrobot-fermion-sht40-temperature-and-humidity-sensor)
 - [A LiPo battery](https://www.tinytronics.nl/en/power/batteries/li-po/li-po-accu-3.7v-2000mah) (Always be careful with LiPo batteries!)
-- 
-
-
-### Rain probe
-
-- OTA updates running on second core ( disabled by default )
-- Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
-- Temperature, humidity, air pressure, dew point and rainfall readings
-- Daily minimum/maximum readings that reset at 0:00
-- Average rainfall per hour, total rainfall, and latest rainfall readings that reset at 0:00
-- Auto-ranging 12 hour graphs of temperature, humidity and air pressure
-- 12 hour bar graph for rainfall
-- Built-in Zambretti forecast
+  
