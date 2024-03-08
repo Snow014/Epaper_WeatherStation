@@ -128,44 +128,15 @@ enum textAligns { LEFT, CENTER, RIGHT };
 const float elevation = 7.0;  //  elevation, in meters
 byte currentMonth;
 
-const String forecast[33] = {
-  "UNDEFINED", //  because arrays are zero indexed, while the algorithm isn't
-  //  FALLING PRESSURE
-  "Settled fine",
-  "Fine weather",
-  "Fine, becoming less settled",
-  "Fairly fine, showery later",
-  "Showery, becoming unsettled",
-  "Unsettled, rain later",
-  "Rain at times, worse later",
-  "Rain at times, becoming very unsettled",
-  "Very unsettled, rain",
-  //  STEADY PRESSURE
-  "Settled fine",
-  "Fine weather",
-  "Fine, possible showers",
-  "Fairly fine, showers likely",
-  "Showery, bright intervals",
-  "Changeable, some rain",
-  "Unsettled, rain at times",
-  "Rain at frequent intervals",
-  "Very unsettled, rain",
-  "Stormy, much rain",
-  //  RISING PRESSURE
-  "Settled fine",
-  "Fine weather",
-  "Becoming fine",
-  "Fairly fine, improving",
-  "Fairly fine, possibly showers early",
-  "Showery early, improving",
-  "Changeable, mending",
-  "Rather unsettled, clearing later",
-  "Unsettled, probably improving",
-  "Unsettled, short fine intervals",
-  "Very unsettled, finer at times",
-  "Stormy, possibly improving",
-  "Stormy, much rain"
-};
+const String zambretti[26]  = {"Settled fine", "Fine weather", "Becoming fine", "Fine, becoming less settled", "Fine, possible showers", "Fairly fine, improving", "Fairly fine, possible showers early", "Fairly fine, showery later", "Showery early, improving", "Changeable, mending", "Fairly fine, showers likely", "Rather unsettled clearing later", "Unsettled, probably improving", "Showery, bright intervals", "Showery, becoming less settled", "Changeable, some rain", "Unsettled, short fine intervals", "Unsettled, rain later", "Unsettled, some rain", "Mostly very unsettled", "Occasional rain, worsening", "Rain at times, very unsettled", "Rain at frequent intervals", "Rain, very unsettled", "Stormy, may improve", "Stormy, much rain"};
+
+const byte rise_options[22] = {25,25,25,24,24,19,16,12,11,9,8,6,5,2,1,1,0,0,0,0,0,0};
+const byte steady_options[22] = {25,25,25,25,25,25,23,23,22,18,15,13,10,4,1,1,0,0,0,0,0,0};
+const byte falling_options[22] = {25,25,25,25,25,25,25,25,23,23,21,20,17,14,7,3,1,1,1,0,0,0};
+
+const int z_min = 950;
+const int z_max = 1050;
+
 
 void setup() {
   Serial.begin(115200);
@@ -559,7 +530,7 @@ void drawWWSUI(){
 
   float oldPressure = gDataP[(graphSize-1)-36];
   if(oldPressure > 900){
-    String forecast = getZambretti(oldPressure, pLast, tLast, 1);
+    String forecast = get_zambretti(oldPressure, pLast, currentMonth, tLast);
 
     u8g2Fonts.setFont(fontxSml);
     drawText(forecast, 400, 10, RIGHT);
@@ -623,7 +594,7 @@ void WWSUIAlt(){
 
   float oldPressure = gDataP[(graphSize-1)-36];
   if(oldPressure > 900){
-    String forecast = getZambretti(oldPressure, pLast, tLast, 1);
+    String forecast = get_zambretti(oldPressure, pLast, currentMonth, tLast);
     drawText(forecast, 200, 40, CENTER);
   }
 
@@ -663,77 +634,57 @@ void WWSUIAlt(){
   display.powerOff();
 }
 
-//  TODO: add seasonal corrections
-String getZambretti(float oldPressure, float currentPressure, float temp, byte month){
-  String zambretti;
+String get_zambretti(float z_hpa_old, float z_hpa, int month, float temp){
 
-  //  convert data do sea-level pressure
-  oldPressure = oldPressure * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
-  currentPressure = currentPressure * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
+  //  convert pressure to sea level adjusted pressure
+  z_hpa = z_hpa * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
+  z_hpa_old = z_hpa_old * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
 
-  float trend = currentPressure - oldPressure;
-  int z;
-  //  DROP : old higher than current, trend is negative
-  //  STDY : -
-  //  RISE : current higher than old, trend is positive
+  int z_range = z_max - z_min;
+  float z_constant = round(z_range / 22);
 
-  // Serial.println("Old: " + String(oldPressure));
-  // Serial.println("Cur: " + String(currentPressure));
-  // Serial.println("Trend: " + String(trend));
+  byte z_trend;
 
-  //  FALLING
-  if(trend <= -1.6){
-    Serial.println("Pressure falling!");
-    if(forceZambrettiRange) { 
-      oldPressure = constrain(oldPressure, 985, 1050);
-      currentPressure = constrain(currentPressure, 985, 1050);
-    } 
-
-    if(oldPressure >= 985 && oldPressure <= 1050 && currentPressure >= 985 && currentPressure <= 1050){
-      z = round(127 - (0.12 * currentPressure));
-      if(currentMonth >= 4 && currentMonth <= 9) { z += 1; }
-      zambretti = forecast[z];
+  if(z_hpa_old - z_hpa > 1.6) { z_trend = 0; }        //  RISING
+  else if(z_hpa_old - z_hpa < - 1.6) { z_trend = 1;}  //  FALLING
+  else { z_trend = 2; }                               //  STEADY
+  
+  //  change value if it's winter
+  if(month <= 3 && month >= 10){
+    if(z_trend == 0){
+      z_hpa += 7 / 100 * z_range;
     }
-    else{ zambretti = "Invalid"; }
-  }
-  //  RISING
-  else if(trend >= 1.6){
-    Serial.println("Pressure rising!");
-
-    if(forceZambrettiRange){
-      oldPressure = constrain(oldPressure, 947, 1030);
-      currentPressure = constrain(currentPressure, 947, 1030);
+    else if(z_trend == 1){
+      z_hpa -= 7 / 100 * z_range;
     }
-
-    if(oldPressure >= 947 && oldPressure <= 1030 && currentPressure >= 947 && currentPressure <= 1030){
-      z = round(185 - (0.16 * currentPressure));
-
-      if(currentMonth >= 4 && currentMonth <= 9) { z += 1; }
-      zambretti = forecast[z];
-    }
-    else{ zambretti = "Invalid"; }
-  }
-  //  STEADY
-  else if(trend <= 1.6 && trend >= -1.6){
-    Serial.println("Pressure steady!");
-
-    if(forceZambrettiRange){
-      oldPressure = constrain(oldPressure, 960, 1033);
-      currentPressure = constrain(currentPressure, 960, 1033);
-    }
-
-    if(oldPressure >= 960 && oldPressure <= 1033 && currentPressure >= 960 && currentPressure <= 1033){
-      z = round(144 - (0.13 * currentPressure));
-      zambretti = forecast[z];
-    }
-    else{ zambretti = "Invalid"; }
-  }
-  else{
-    zambretti = "Invalid";
   }
 
-  //  Serial.println("Z: " + String(z));
-  return zambretti;
+  if(z_hpa == z_max) { z_hpa = z_max - 1;}
+  byte z_out = floor((z_hpa - z_min) / z_constant);
+
+  if(z_out < 0){
+    z_out = 0;
+  }
+  if(z_out > 21){
+    z_out = 21;
+  }
+
+  String output;
+
+  if(z_trend == 0){       //  RISING
+    output = zambretti[rise_options[z_out]];
+  }
+  else if(z_trend == 1){  //  FALLING
+    output = zambretti[falling_options[z_out]];
+  }
+  else{                   //  STEADY
+    output = zambretti[steady_options[z_out]];
+  }
+
+  //  Serial.println("Z_out: " + String(z_out));
+  //  Serial.println("Z_trend: " + String(z_trend));
+
+  return output;
 }
 
 //-----------------------------[UI  FUNCTIONS]-----------------------------
