@@ -12,6 +12,7 @@ This Repository ( and project for that matter ) is still a WIP, and will get upd
 - A 4.2" E-paper screen
 - Small form factor
 - runs on an ESP32
+
 - Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
 - Temperature, humidity, air pressure, dew point and rainfall readings
 - Daily minimum/maximum readings that reset at 0:00
@@ -49,9 +50,20 @@ This weather system uses the 433mhz band to wirelessly transmit data, be sure to
 The T-base has an option for a switch to completely power off the board, this is useful to save battery when the system is off, or to make sure it isn't sending while you're charging it. If you want to make use of this, be sure to remove the 0k resistor near the switch.
 
 ### Rain probe
+
 - [Rainfall sensor](https://www.tinytronics.nl/en/sensors/liquid/dfrobot-gravity-tipping-bucket-rainfall-sensor-i2c-uart)
 - Some sort of ESP32 board, as long as it has enough pins for I2C and one UART connection it doesn't matter. I went with a [Seeed studio Xiao](https://www.tinytronics.nl/en/development-boards/microcontroller-boards/with-wi-fi/seeed-studio-xiao-esp32-s3).
 - [RTC module](https://www.tinytronics.nl/en/sensors/time/rtc-ds3231-incl.-battery-for-raspberry-pi) ( different from RTC in reciever, far smaller footprint, and cheaper, but no easily replacable battery.)
 - [A HC-12 433Mhz wireless transiever](https://www.tinytronics.nl/en/communication-and-signals/wireless/rf/modules/hc-12-si4438-wireless-serial-port-module-433mhz)
 - [Prototyping boards](https://www.tinytronics.nl/en/tools-and-mounting/prototyping-supplies/experiment-pcbs/experiment-pcb-4cm*6cm-double-sided) ( No custom PCB yet)
 - [Female pin headers](https://www.tinytronics.nl/en/cables-and-connectors/connectors/pin-headers/female/20-pins-header-female)
+
+
+- OTA updates running on second core ( disabled by default )
+- Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
+- Temperature, humidity, air pressure, dew point and rainfall readings
+- Daily minimum/maximum readings that reset at 0:00
+- Average rainfall per hour, total rainfall, and latest rainfall readings that reset at 0:00
+- Auto-ranging 12 hour graphs of temperature, humidity and air pressure
+- 12 hour bar graph for rainfall
+- Built-in Zambretti forecast
