@@ -12,6 +12,7 @@ This Repository ( and project for that matter ) is still a WIP, and will get upd
 - A 4.2" E-paper screen
 - Small form factor
 - runs on an ESP32
+
 - Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
 - Temperature, humidity, air pressure, dew point and rainfall readings
 - Daily minimum/maximum readings that reset at 0:00
@@ -42,3 +43,12 @@ I will link the products I bought from their site, but feel free to buy them els
 
 
 ### Rain probe
+
+- OTA updates running on second core ( disabled by default )
+- Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
+- Temperature, humidity, air pressure, dew point and rainfall readings
+- Daily minimum/maximum readings that reset at 0:00
+- Average rainfall per hour, total rainfall, and latest rainfall readings that reset at 0:00
+- Auto-ranging 12 hour graphs of temperature, humidity and air pressure
+- 12 hour bar graph for rainfall
+- Built-in Zambretti forecast
