@@ -12,13 +12,14 @@ This Repository ( and project for that matter ) is still a WIP, and will get upd
 - A 4.2" E-paper screen
 - Small form factor
 - runs on an ESP32
-
+- OTA updates running on second core ( disabled by default )
 - Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
 - Temperature, humidity, air pressure, dew point and rainfall readings
 - Daily minimum/maximum readings that reset at 0:00
 - Auto-ranging 12 hour graphs of temperature, humidity and air pressure
 - 12 hour bar graph for rainfall
 - Built-in Zambretti forecast
+  
 ##  Bill of Materials
 
 I buy most of my parts from [Tinytronics](https://www.tinytronics.nl/en), a local store. They ship to what seems like most of Europe, though they're definitely  not the cheapest.
@@ -57,13 +58,3 @@ The T-base has an option for a switch to completely power off the board, this is
 - [A HC-12 433Mhz wireless transiever](https://www.tinytronics.nl/en/communication-and-signals/wireless/rf/modules/hc-12-si4438-wireless-serial-port-module-433mhz)
 - [Prototyping boards](https://www.tinytronics.nl/en/tools-and-mounting/prototyping-supplies/experiment-pcbs/experiment-pcb-4cm*6cm-double-sided) ( No custom PCB yet)
 - [Female pin headers](https://www.tinytronics.nl/en/cables-and-connectors/connectors/pin-headers/female/20-pins-header-female)
-
-
-- OTA updates running on second core ( disabled by default )
-- Custom PCB's for both the sender and the reciever, as well as 3d printable enclosures
-- Temperature, humidity, air pressure, dew point and rainfall readings
-- Daily minimum/maximum readings that reset at 0:00
-- Average rainfall per hour, total rainfall, and latest rainfall readings that reset at 0:00
-- Auto-ranging 12 hour graphs of temperature, humidity and air pressure
-- 12 hour bar graph for rainfall
-- Built-in Zambretti forecast
