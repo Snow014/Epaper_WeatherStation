@@ -634,34 +634,35 @@ void WWSUIAlt(){
   display.powerOff();
 }
 
-String get_zambretti(float z_hpa_old, float z_hpa, int month, float temp){
+String get_zambretti(float z_hpa, float z_hpa_old, int month, float temp){
 
-  //  convert pressure to sea level adjusted pressure
-  z_hpa = z_hpa * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
-  z_hpa_old = z_hpa_old * pow(1 - (0.0065 * elevation) / (temp + (0.0065 * elevation) + 273.15),-5.257 );
+  //  convert to sea level adjusted pressure
+  z_hpa = (z_hpa / pow(1 - ((0.0065 *elevation) / (temp + (0.0065 *elevation) + 273.15)), 5.257));
+  z_hpa_old = (z_hpa_old / pow(1 - ((0.0065 *elevation) / (temp + (0.0065 *elevation) + 273.15)), 5.257));
 
-  int z_range = z_max - z_min;
+  float z_range = z_max - z_min;
   float z_constant = round(z_range / 22);
 
-  byte z_trend;
+  byte z_trend = 100;
 
-  if(z_hpa_old - z_hpa > 1.6) { z_trend = 0; }        //  RISING
-  else if(z_hpa_old - z_hpa < - 1.6) { z_trend = 1;}  //  FALLING
-  else { z_trend = 2; }                               //  STEADY
-  
+  if(z_hpa_old - z_hpa < -1.6) { z_trend = 0; }        //  RISING
+  else if(z_hpa_old - z_hpa > 1.6) { z_trend = 1;}     //  FALLING
+  else { z_trend = 2; }                                //  STEADY
+
   //  change value if it's winter
   if(month <= 3 && month >= 10){
     if(z_trend == 0){
-      z_hpa += 7 / 100 * z_range;
+      z_hpa = z_hpa + 7 / 100 * z_range;
     }
     else if(z_trend == 1){
-      z_hpa -= 7 / 100 * z_range;
+      z_hpa = z_hpa - 7 / 100 * z_range;
     }
   }
 
   if(z_hpa == z_max) { z_hpa = z_max - 1;}
   byte z_out = floor((z_hpa - z_min) / z_constant);
 
+  
   if(z_out < 0){
     z_out = 0;
   }
@@ -680,9 +681,6 @@ String get_zambretti(float z_hpa_old, float z_hpa, int month, float temp){
   else{                   //  STEADY
     output = zambretti[steady_options[z_out]];
   }
-
-  //  Serial.println("Z_out: " + String(z_out));
-  //  Serial.println("Z_trend: " + String(z_trend));
 
   return output;
 }
