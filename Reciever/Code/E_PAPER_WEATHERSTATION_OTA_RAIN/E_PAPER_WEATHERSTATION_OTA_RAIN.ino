@@ -50,6 +50,8 @@ const bool forceZambrettiRange = true;//  force pressure to be in-range for zamb
  * VCC  - 3.3V
  */
 
+//  #define USEBWR
+
 #ifdef USEBWR
   #include <GxEPD2_3C.h>  //  B/W/R
   GxEPD2_3C<GxEPD2_420c, GxEPD2_420c::HEIGHT> display(GxEPD2_420c(/*CS=5*/ SS, /*DC=*/27, /*RST=*/15, /*BUSY=*/4)); //  B/W/R screen constructor
@@ -136,7 +138,7 @@ const byte falling_options[22] = {25,25,25,25,25,25,25,25,23,23,21,20,17,14,7,3,
 
 const int z_min = 950;
 const int z_max = 1050;
-
+byte pressure_trend;
 
 void setup() {
   Serial.begin(115200);
@@ -592,18 +594,30 @@ void WWSUIAlt(){
 
   drawText(dewString, 0, 15);
 
-  float oldPressure = gDataP[(graphSize-1)-36];
-  if(oldPressure > 900){
-    String forecast = get_zambretti(oldPressure, pLast, currentMonth, tLast);
-    drawText(forecast, 200, 40, CENTER);
-  }
+  float oldPressure = gDataP[graphSize-37];
+  String forecast = get_zambretti(pLast, oldPressure, currentMonth, tLast);
+  drawText(forecast, 200, 40, CENTER);
+
+  //  calculate Rate Of Change
+  float rocValNow = gDataT[graphSize-1] + gDataT[graphSize - 2] + gDataT[graphSize - 3];
+  rocValNow = rocValNow / 3;
+  Serial.println("rocNow: " + String(rocValNow));
+
+  float rocValOld = gDataT[graphSize - 12] + gDataT[graphSize - 13] + gDataT[graphSize - 14];
+  rocValOld = rocValOld / 3;
+  Serial.println("RocOld: " + String(rocValOld));
+
+  float rateOfChange = rocValNow - rocValOld;
+  Serial.println("Rate Of Change: " + String(rateOfChange));
+
+  u8g2Fonts.setFont(fontxSml);
+  drawText("RoC: " + String(rateOfChange) + "c / hr", 200, 15, CENTER);
 
   display.drawFastVLine(130, 75, 90, colorBlack);
   display.drawFastVLine(275, 75, 90, colorBlack);
 
-  u8g2Fonts.setFont(fontxSml);
-  drawText("Temperature", 60, 70, CENTER);
 
+  drawText("Temperature", 60, 70, CENTER);
   drawText("Humidity", 200, 70, CENTER);
   drawText("Air pressure", 345, 70, CENTER);
 
@@ -648,6 +662,8 @@ String get_zambretti(float z_hpa, float z_hpa_old, int month, float temp){
   if(z_hpa_old - z_hpa < -1.6) { z_trend = 0; }        //  RISING
   else if(z_hpa_old - z_hpa > 1.6) { z_trend = 1;}     //  FALLING
   else { z_trend = 2; }                                //  STEADY
+
+  pressure_trend = z_trend;
 
   //  change value if it's winter
   if(month <= 3 && month >= 10){
@@ -881,9 +897,10 @@ void drawSimpleGraph(int xPos, int yPos, int width, int height, bool autoScale, 
 
     (drawBlackGraph) ? display.drawLine(xOne, yCoords[gx], xTwo, yCoords[gx+1], GxEPD_BLACK) : display.drawLine(xOne, yCoords[gx], xTwo, yCoords[gx+1], GxEPD_RED);
   }
-  u8g2Fonts.setCursor(xPos + 3, (yPos+height)-5);
-  String graphLen = String((graphSize * dataFreq) / 60) + "h";
-  u8g2Fonts.print(graphLen);
+  //  draw graph period ( disabled for now, to reduce clutter )
+  // u8g2Fonts.setCursor(xPos + 3, (yPos+height)-5);
+  // String graphLen = String((graphSize * dataFreq) / 60) + "h";
+  // u8g2Fonts.print(graphLen);
 }
 
 void drawGraph(int xPos, int yPos, int width, int height, bool autoScale, float yMinStatic, float yMaxStatic, float minScale, float data[graphSize], String title, String minTitle, String maxTitle) {
@@ -1073,7 +1090,7 @@ void clearCycle(byte cycles){
   }
 }
 
-//erases whatever is inside the box area!
+//  erases whatever is inside the box area!
 void drawBox(int xPos, int yPos, int w, int h, int borderSize){
   display.fillRect(xPos, yPos, w, h, colorBlack);
   display.fillRect(xPos+borderSize, yPos+borderSize, w-(borderSize*2), h-(borderSize*2), colorWhite);
