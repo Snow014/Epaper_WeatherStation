@@ -59,3 +59,11 @@ The T-base has an option for a switch to completely power off the board, this is
 - [A HC-12 433Mhz wireless transiever](https://www.tinytronics.nl/en/communication-and-signals/wireless/rf/modules/hc-12-si4438-wireless-serial-port-module-433mhz)
 - [Prototyping boards](https://www.tinytronics.nl/en/tools-and-mounting/prototyping-supplies/experiment-pcbs/experiment-pcb-4cm*6cm-double-sided) ( No custom PCB yet)
 - [Female pin headers](https://www.tinytronics.nl/en/cables-and-connectors/connectors/pin-headers/female/20-pins-header-female)
+
+
+## Planned features
+- Add particulate matter sensor
+- Switch to better BMS that supports temperature charging cutoff
+- Add solar panel
+- Integrate charging circuit into PCB
+- Revise 3d printed Stevenson screen
