@@ -50,7 +50,7 @@ const bool forceZambrettiRange = true;//  force pressure to be in-range for zamb
  * VCC  - 3.3V
  */
 
-//  #define USEBWR
+//#define USEBWR
 
 #ifdef USEBWR
   #include <GxEPD2_3C.h>  //  B/W/R
@@ -96,6 +96,7 @@ const int maxPadding = 0;
 const byte numBarLines = 4;
 const byte minScale = 5;
 float gDataR[rainGraphSize];
+byte rainDataHour = 0;
 
 String gDataTime[graphSize];
 
@@ -140,15 +141,18 @@ const int z_min = 950;
 const int z_max = 1050;
 byte pressure_trend;
 
+const bool testMode = false; //  skips RTC sync at boot
+
 void setup() {
   Serial.begin(115200);
+  Serial2.begin(2400, SERIAL_8N1, 16, 17);  //  init HC-12 module
   //  Serial1.begin(115200, SERIAL_8N1, -1, 33);  //  rain info screen
-  Serial2.begin(2400);  //  HC-12
+  //  Serial2.begin(2400);  //  HC-12
   
   Wire.begin();
 
   rtc.begin();
-  syncRTC("Wifi24", "mjv3kncyKkyk");
+  if(!testMode) syncRTC("Wifi24", "mjv3kncyKkyk");
 
   // xTaskCreatePinnedToCore(
   //                   OTA,         /* Task function. */
@@ -175,7 +179,7 @@ void setup() {
   // }
   
   // for(int i = 0; i < rainGraphSize; i++){
-  //   gDataR[i] = 10;
+  //   gDataR[i] = random(20);
   // }
 
   if(wipeOnStartup){
@@ -197,7 +201,7 @@ void setup() {
     drawText(wifiText, 200, 80, CENTER);
     drawText(startTime, 200, 130, CENTER);
 
-    //  WWSUIAlt();
+    if(testMode) { WWSUIAlt(); }
 
     display.display();
     display.powerOff();
@@ -206,6 +210,17 @@ void setup() {
  
 void loop() {
   if(recievedData()){ WWSUIAlt(); }
+
+  while(Serial.available()){
+    String data = Serial.readStringUntil('\n');
+
+    if(data.equalsIgnoreCase("update")){
+      WWSUIAlt();
+    }
+    if(data.equalsIgnoreCase("testTime")){
+      Serial.println(data.substring(data.length()-2));
+    }
+  }
 }
 
 void OTA(void * pvParameters){
@@ -419,12 +434,21 @@ void parseRainData(String rawData){
   //  extract data from raw string
   rawData.trim();
   
+  //  get data time from on-board RTC instead of rainsensor RTC
+  DateTime now = rtc.now();
+  rainTime = String(now.hour()) + ":";
+  if(now.minute() < 10) rainTime += "0";
+  rainTime += String(now.minute());
+
+  rainDataHour = now.hour();
+
+  //  rainTime = rawData.substring(rawData.indexOf("|")+1);          //  full time ( String format )
+  //  int dataHour = rainTime.substring(0, rainTime.indexOf(":")).toInt();  //  hour from time
+
   rainLast = rawData.substring(1, rawData.indexOf("|")).toFloat();      //  rain value 
-  rainTime = rawData.substring(rawData.indexOf("|")+1);          //  full time ( String format )
-  int dataHour = rainTime.substring(0, rainTime.indexOf(":")).toInt();  //  hour from time
 
   Serial.println("rainLast: " + String(rainLast));
-  Serial.println("dataHour: " + String(dataHour));
+  Serial.println("dataHour: " + String(rainDataHour));
   Serial.println("rainTime: " + String(rainTime));
 
   //  shift data into array
@@ -435,7 +459,7 @@ void parseRainData(String rawData){
 
   //  update total/last
   rainTotal += rainLast;
-  (dataHour) ? rainAvg = (rainTotal / dataHour) : rainAvg = rainLast;
+  (rainDataHour) ? rainAvg = (rainTotal / rainDataHour) : rainAvg = rainLast;
 
   //  reset at 0:00
   if(rainTime.equals("0:00") || rainTime.equals("00:00")){
@@ -616,7 +640,6 @@ void WWSUIAlt(){
   display.drawFastVLine(130, 75, 90, colorBlack);
   display.drawFastVLine(275, 75, 90, colorBlack);
 
-
   drawText("Temperature", 60, 70, CENTER);
   drawText("Humidity", 200, 70, CENTER);
   drawText("Air pressure", 345, 70, CENTER);
@@ -634,13 +657,21 @@ void WWSUIAlt(){
   drawSimpleGraph(145, 190, 105, 30, true, 40, 100, 5, gDataH, "", "min", "max");
   drawSimpleGraph(290, 190, 105, 30, true, 0, 30, 5, gDataP, "", "min", "max");
 
+  display.drawFastHLine(20, 225, 360, colorBlack);  //  divider
+
   u8g2Fonts.setFont(fontxSml);
 
-  drawText("Avg/hr: " + String(rainAvg), 0, 235, LEFT);
-  drawText("Last: " + String(rainLast), 200, 235, CENTER);
-  drawText("Total:" + String(rainTotal), 400, 235, RIGHT);
+  drawText("Avg/hr: " + String(rainAvg), 0, 245, LEFT);
+  drawText("Last: " + String(rainLast), 0, 265, LEFT);
+  drawText("Total:" + String(rainTotal), 0, 285, LEFT);
 
-  drawBargraph(0, 230, 400, 70, gDataR);
+  drawBargraph(70, 230, 330, 70, gDataR);
+
+  // drawText("Avg/hr: " + String(rainAvg), 0, 235, LEFT);
+  // drawText("Last: " + String(rainLast), 200, 235, CENTER);
+  // drawText("Total:" + String(rainTotal), 400, 235, RIGHT);
+
+  // drawBargraph(0, 230, 400, 70, gDataR);
 
   drawText(rainTime, 400, 25, RIGHT);
 
@@ -702,15 +733,7 @@ String get_zambretti(float z_hpa, float z_hpa_old, int month, float temp){
 }
 
 //-----------------------------[UI  FUNCTIONS]-----------------------------
-// UI STUFF //
-//xPos    = xPosition of upper left corner of the box
-//yPos    = yPosition of upper left corner of the box
-//w       = width of box
-//h       = height of box, going downward!
-//border  = thickness of box border, in pixels
-//mainNum = String that gets displayed at the top
-//subNum  = Strings that get displayed under mainNum
-//title   = text to display in the left upper corner
+
  
 void drawSecDisplay(int xPos, int yPos, int w, int h, int border, String mainNum, String subNumOne, String subNumTwo, String title){
   
@@ -807,7 +830,7 @@ void drawBargraph(int xPos, int yPos, int w, int h, float data[rainGraphSize], f
   }
   if(minRange < 0) { minRange = 0; }
 
-  byte spacing = 1;
+  byte spacing = 2;
   int startOffset = 1;
   byte barWidth = (screenWidthLocal / rainGraphSize) - spacing;
 
@@ -841,6 +864,24 @@ void drawBargraph(int xPos, int yPos, int w, int h, float data[rainGraphSize], f
     byte yOffset = 0;
     if(rainGraphSize > 12){ (i % 2) ? yOffset = 0 : yOffset = 10; }
 
+    if(i % 4 == 0){
+      int lastRain = rainDataHour;
+      display.drawFastVLine(xPoint + (barWidth / 2), yPos+12, w-12, colorBlack);
+      
+      int hourModifier = ((rainGraphSize - i) / 2);
+      int hourMark = 0;
+
+      hourMark = lastRain - hourModifier;
+      if(lastRain - hourModifier < 0){ hourMark += 24; }
+
+
+      String rainMarker = String(hourMark) + ":";
+      rainMarker += rainTime.substring(rainTime.length()-2);
+
+      Serial.println(String(lastRain) + " - " + String(hourModifier) + " = " + String(hourMark));
+
+      drawText(rainMarker, xPoint + (barWidth / 2), yPos+8, CENTER); 
+    }
 
     //  drawText(String(data[i]), xPoint + (barWidth / 2), screenHeightLocal + 15 + yOffset, CENTER);
 
@@ -860,7 +901,7 @@ void drawSimpleGraph(int xPos, int yPos, int width, int height, bool autoScale, 
   float yMin = 10000;
   float yMax = -10000;
  
-  //find min/max if autoscaling is enabled
+  //  find min/max if autoscaling is enabled
   if(autoScale){
     for(int i = 0; i < graphSize; i++){
       if(data[i] > yMax) { yMax = data[i]; }
@@ -886,6 +927,20 @@ void drawSimpleGraph(int xPos, int yPos, int width, int height, bool autoScale, 
   //  int mappedMinIndex, mappedMaxIndex;
   float lastBig =  100000.0;
   float lastSml = -100000.0;
+
+  //  calculate X position of midnight indicator
+  DateTime now = rtc.now();
+  int totalMin = (now.hour() * 60) + now.minute();
+
+  int midnightX = totalMin / 5; //  5min between data points
+
+  if(midnightX < graphSize){
+    midnightX = graphSize - midnightX;  //  invert
+    midnightX = map(midnightX, 0, graphSize, xPos, xPos+width);
+
+    display.drawFastVLine(midnightX, yPos, 5, GxEPD_BLACK);
+    display.drawFastVLine(midnightX, (yPos + height) - 5, 5, GxEPD_BLACK);
+  }
 
   //  draw data into array
   for(int gx = 0; gx < graphSize-1; gx++){
